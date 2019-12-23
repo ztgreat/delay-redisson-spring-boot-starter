@@ -15,7 +15,7 @@ import java.util.concurrent.*;
  *
  * @author zhangteng
  */
-public class MemoryTimer extends AbstractTimer {
+public class MemoryTimeWheelTimer extends AbstractTimer {
 
 
     private static Logger logger = LoggerFactory.getLogger(TimeWheel.class);
@@ -28,7 +28,7 @@ public class MemoryTimer extends AbstractTimer {
     /**
      * 一个Timer只有一个delayQueue
      */
-    private DelayQueue<TimerTaskList> delayQueue = new DelayQueue<>();
+    private DelayQueue<TimerTaskList> delayQueue;
 
     /**
      * 过期任务执行线程
@@ -49,14 +49,10 @@ public class MemoryTimer extends AbstractTimer {
      * @param checkTime        线程检查延迟任务间隔
      * @param workerThreadPool 用于处理 延迟任务的线程池
      */
-    public MemoryTimer(long tickMs, int wheelSize, long checkTime, ExecutorService workerThreadPool) {
+    public MemoryTimeWheelTimer(long tickMs, int wheelSize, long checkTime, ExecutorService workerThreadPool) {
         timeWheel = new TimeWheel(tickMs, wheelSize, System.currentTimeMillis(), delayQueue);
         this.workerThreadPool = workerThreadPool;
-        // 一个线程 去推进时间
-        bossThreadPool = new ThreadPoolExecutor(1, 1,
-                0L, TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<>(), ThreadFactoryBuilder.create().setNamePrefix("delay-queue-").build());
-        //500ms获取一次过期任务
+        //checkTime ms获取一次过期任务
         bossThreadPool.submit(() -> {
             while (true) {
                 this.advanceClock(checkTime);
@@ -67,22 +63,27 @@ public class MemoryTimer extends AbstractTimer {
     /**
      * 添加任务
      */
-    public synchronized void addTask(TimerTask timerTask) {
-        try {
+    @Override
+    protected synchronized void doAddTask(DelayedTask delayedTask) {
 
-            if (hasTask(timerTask.getId())) {
+        if (!(delayedTask instanceof MemoryDelayedTask)) {
+            logger.info("[延迟任务到期]-任务类型错误");
+            return;
+        }
+        MemoryDelayedTask memoryDelayedTask = (MemoryDelayedTask) delayedTask;
+        try {
+            if (hasTask(memoryDelayedTask.getId())) {
                 return;
             }
-
             //添加失败任务直接执行
-            if (!timeWheel.addTask(timerTask)) {
-                logger.info("[延迟任务到期]-[{}],准备执行回调方法", timerTask.getName());
-                if (Objects.nonNull(timerTask.getTask())) {
-                    workerThreadPool.submit(timerTask.getTask());
+            if (!timeWheel.addTask(memoryDelayedTask)) {
+                logger.info("[延迟任务到期]-[{}],准备执行回调方法", memoryDelayedTask.getName());
+                if (Objects.nonNull(memoryDelayedTask.getTask())) {
+                    workerThreadPool.submit(memoryDelayedTask.getTask());
                 }
             }
         } catch (Exception e) {
-            logger.error("[延迟任务]-[{}],延迟任务添加/更新 失败", timerTask.getName());
+            logger.error("[延迟任务]-[{}],延迟任务添加/更新 失败", memoryDelayedTask.getName());
         }
     }
 
@@ -135,7 +136,7 @@ public class MemoryTimer extends AbstractTimer {
                 //推进时间
                 timeWheel.advanceClock(timerTaskList.getExpiration());
                 //执行过期任务（包含降级操作）
-                timerTaskList.flush(this::addTask);
+                timerTaskList.flush(this::doAddTask);
             }
         } catch (Exception e) {
             logger.error("[延迟任务] 推进时间轮 进度 失败:[{}]", e);
@@ -148,7 +149,7 @@ public class MemoryTimer extends AbstractTimer {
      * @param taskId 任务id
      * @return TimerTask  返回该任务的 引用
      */
-    public TimerTask getTask(String taskId) {
+    public MemoryDelayedTask getTask(String taskId) {
 
         Iterator<TimerTaskList> iterator = delayQueue.iterator();
         while (iterator.hasNext()) {
@@ -161,13 +162,12 @@ public class MemoryTimer extends AbstractTimer {
     }
 
     @Override
-    protected void doAddTask(DelayedTask job) {
-
-    }
-
-    @Override
     protected void onStart() {
-
+        delayQueue = new DelayQueue<>();
+        // 一个线程 去推进时间
+        bossThreadPool = new ThreadPoolExecutor(1, 1,
+                0L, TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<>(), ThreadFactoryBuilder.create().setNamePrefix("delay-queue-").build());
     }
 
     @Override

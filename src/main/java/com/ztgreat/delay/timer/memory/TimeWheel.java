@@ -13,7 +13,7 @@ import java.util.concurrent.DelayQueue;
  */
 public class TimeWheel {
 
-    private static  Logger logger = LoggerFactory.getLogger(TimeWheel.class);
+    private static Logger logger = LoggerFactory.getLogger(TimeWheel.class);
 
     /**
      * 一个时间槽的范围
@@ -81,8 +81,8 @@ public class TimeWheel {
     /**
      * 添加任务到时间轮
      */
-    boolean addTask(TimerTask timerTask) {
-        long expiration = timerTask.getDelayMs();
+    boolean addTask(MemoryDelayedTask memoryDelayedTask) {
+        long expiration = memoryDelayedTask.getExecuteTime();
         //过期任务直接执行
         if (expiration < currentTime + tickMs) {
             return false;
@@ -92,16 +92,16 @@ public class TimeWheel {
             long virtualId = expiration / tickMs;
             int index = (int) (virtualId % wheelSize);
             TimerTaskList timerTaskList = timerTaskLists[index];
-            timerTaskList.addTask(timerTask);
+            timerTaskList.addTask(memoryDelayedTask);
             if (timerTaskList.getExpiration() == -1 && timerTaskList.setExpiration(virtualId * tickMs)) {
                 //添加到delayQueue中
-                logger.info("[延迟任务]-[{}],添加/更新 成功,到期时间:[{}]", timerTask.getName(), DateUtil.format(DateUtil.date(expiration), "yyyy-MM-dd HH:mm:ss"));
+                logger.info("[延迟任务]-[{}],添加/更新 成功,到期时间:[{}]", memoryDelayedTask.getName(), DateUtil.format(DateUtil.date(expiration), "yyyy-MM-dd HH:mm:ss"));
                 delayQueue.offer(timerTaskList);
             }
         } else {
             //放到上一层的时间轮
             TimeWheel timeWheel = getOverflowWheel();
-            timeWheel.addTask(timerTask);
+            timeWheel.addTask(memoryDelayedTask);
         }
         return true;
     }
@@ -112,10 +112,11 @@ public class TimeWheel {
     void advanceClock(long timestamp) {
         if (timestamp >= currentTime + tickMs) {
             currentTime = timestamp - (timestamp % tickMs);
-            if (overflowWheel != null) {
-                //推进上层时间轮时间
-                this.getOverflowWheel().advanceClock(timestamp);
+            if (overflowWheel == null) {
+                return;
             }
+            //推进上层时间轮时间
+            this.getOverflowWheel().advanceClock(timestamp);
         }
     }
 }

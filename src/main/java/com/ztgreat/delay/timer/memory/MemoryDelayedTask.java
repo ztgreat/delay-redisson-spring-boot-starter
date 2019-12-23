@@ -1,17 +1,13 @@
 package com.ztgreat.delay.timer.memory;
 
+import com.ztgreat.delay.timer.DelayedTask;
+
 /**
  * 任务
  *
  * @author zhangteng
  */
-public class TimerTask {
-
-
-    /**
-     * 任务id，唯一
-     */
-    private String id;
+public class MemoryDelayedTask extends DelayedTask {
 
     /**
      * 任务名字
@@ -36,21 +32,16 @@ public class TimerTask {
     /**
      * 下一个节点
      */
-    protected TimerTask next;
+    protected MemoryDelayedTask next;
 
     /**
      * 上一个节点
      */
-    protected TimerTask pre;
+    protected MemoryDelayedTask pre;
 
-    /**
-     * 描述
-     */
-    public String desc;
 
-    public TimerTask(String id, String name, long delayMs, Runnable task) {
-        this.delayMs = System.currentTimeMillis() + delayMs;
-        this.id = id;
+    public MemoryDelayedTask(String name, long delayMs, Runnable task) {
+        this.delayMs = delayMs;
         this.name = name;
         this.task = task;
         this.timerTaskList = null;
@@ -58,46 +49,24 @@ public class TimerTask {
         this.pre = this;
     }
 
-    public String getId() {
-        return id;
+    @Override
+    public void run() {
+
     }
 
-    public void setId(String id) {
-        this.id = id;
+    @Override
+    public long getDelay() {
+        return delayMs;
     }
 
     public String getName() {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDesc() {
-        return desc;
-    }
-
-    public void setDesc(String desc) {
-        this.desc = desc;
-    }
-
     public Runnable getTask() {
         return task;
     }
 
-    public long getDelayMs() {
-        return delayMs;
-    }
-
-    public Long getExpiration() {
-
-        if (timerTaskList == null) {
-            return null;
-        }
-        return timerTaskList.getExpiration();
-
-    }
 
     @Override
     public String toString() {

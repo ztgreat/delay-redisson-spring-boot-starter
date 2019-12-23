@@ -4,6 +4,7 @@ import com.ztgreat.delay.timer.DelayedTask;
 import com.ztgreat.delay.timer.redis.RedisExpireTimer;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
+import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 
@@ -13,6 +14,7 @@ import javax.annotation.Resource;
  *
  * @author ztgreat
  */
+@Component
 public class RedisDelayedTaskScheduler implements DelayedTaskScheduler {
 
     @Resource

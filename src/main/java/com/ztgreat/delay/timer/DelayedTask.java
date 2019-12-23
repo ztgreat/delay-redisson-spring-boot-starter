@@ -45,7 +45,6 @@ public abstract class DelayedTask implements Serializable {
         this.id = id;
         this.executeTime = getDelay() + System.currentTimeMillis();
         this.handler = handler;
-
         LOGGER.debug("task {} will execute at {}", id, new Date(getExecuteTime()));
     }
 
@@ -59,8 +58,6 @@ public abstract class DelayedTask implements Serializable {
 
     /**
      * 获取执行时间点
-     *
-     * @return
      */
     public long getExecuteTime() {
         return executeTime;
