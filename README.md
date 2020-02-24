@@ -1,4 +1,4 @@
-# smart-redisson-spring-boot-starter
+# queue-redisson-spring-boot-starter
 
 #### 介绍
 redisson的springboot starter简单实现，并基于spring-messaging对redisson的队列和延迟队列进行了实现，\
@@ -10,49 +10,7 @@ spring 5.0.10\
 springboot 2.0.6
 
 #### 安装教程
-1. 由于未提交maven中央仓库（比较麻烦没弄），使用需要clone代码自行打成jar包
-2. 得到jar包之后通过scope为system引入，并且需手动引入该项目的依赖包
-3. 由于条件限制，这种方法没有达到starter真正的意义，可根据需要使用
-```     
-<dependency>
-    <groupId>com.riven</groupId>
-    <artifactId>smart-redisson-spring-boot-starter</artifactId>
-    <version>1.0.0.RELEASE</version>
-    <scope>system</scope>
-    <systemPath>***</systemPath>
-</dependency>
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter</artifactId>
-    <version>2.0.6.RELEASE</version>
-</dependency>
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-autoconfigure</artifactId>
-    <version>2.0.6.RELEASE</version>
-</dependency>
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-configuration-processor</artifactId>
-    <version>2.0.6.RELEASE</version>
-</dependency>
-<dependency>
-    <groupId>org.springframework</groupId>
-    <artifactId>spring-messaging</artifactId>
-    <version>5.0.10.RELEASE</version>
-</dependency>
-<dependency>
-    <groupId>org.redisson</groupId>
-    <artifactId>redisson</artifactId>
-    <version>3.11.1</version>
-</dependency>
-<dependency>
-    <groupId>com.alibaba</groupId>
-    <artifactId>fastjson</artifactId>
-    <version>1.2.60</version>
-</dependency>
-``` 
-有私服的可以将jar包放到私服，直接普通的引用即可，这种方式能达到真正意义的starter，一键启动
+有私服的可以将jar包放到私服，直接普通的引用即可.
 ```
 <dependency>
     <groupId>com.riven</groupId>
@@ -79,7 +37,7 @@ spring:
 ```
 @Bean
 public RedissonQueue redissonQueue() {
-    return new RedissonQueue("riven", true, null, messageConverter());
+    return new RedissonQueue("test", true, null, messageConverter());
 }
 ```
 创建队列的时候可以指定队列名称、是否延迟队列、隔离策略、消息转换器。\
@@ -101,7 +59,7 @@ public void test() {
     carLbsDto.setCityId(265);
     carLbsDto.setName("fsfds");
     carLbsDto.setCarNum("156156");
-    redissonTemplate.sendWithDelay("riven", carLbsDto, 5000);
+    redissonTemplate.sendWithDelay("test", carLbsDto, 5000);
 }
 ```
 4.消费消息\
@@ -128,7 +86,7 @@ public class RedissonTestApplication {
         };
     }
 
-    @RedissonListener(queues = "riven", messageConverter = "myMessageConverter")
+    @RedissonListener(queues = "test", messageConverter = "myMessageConverter")
     public void handler(@Header(value = RedissonHeaders.MESSAGE_ID, required = false) String messageId,
                         @Header(RedissonHeaders.DELIVERY_QUEUE_NAME) String queue,
                         @Header(RedissonHeaders.SEND_TIMESTAMP) long sendTimestamp,
@@ -159,35 +117,3 @@ com.a.TestClass进行定义类，才能正确的接收到消息的内容，否�
 也会存在同样的问题，这不是我们想要的。所以消息的存储完全是与项目、类信息等无关的，仅仅是一个json格式的数据，\
 所以消费者读到的数据实际上是一个json格式的字符串，在使用的时候我们要注意到，消费者接收到的消息都是基于json转换而来的，\
 如果我们不自定义MessageConverter转换器，那么我们拿到的数据消息体就是一个json字符串，消息头就是一个json对象。
-
-#### 常用类
-1.常用的核心注解
-```
-EnableRedisson
-RedissonListener
-```
-2.常用的核心类
-```
-RedissonClient
-RedissonQueue
-RedissonTemplate
-RedissonMessage
-```
-3.常用的核心接口
-```
-IsolationStrategy
-MessageConverter
-```
-
-#### 性能测试
-单线程写入速度1100/s左右，因为写入速度明显不是在redis服务器上，所以测试客户端多线程写入，写入速度1.2w+/s。\
-消费速度1300/s左右。\
-以上测试数据为非专业测试机测试结果，仅供参考。
-#### 码云特技
-
-1. 使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2. 码云官方博客 [blog.gitee.com](https://blog.gitee.com)
-3. 你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解码云上的优秀开源项目
-4. [GVP](https://gitee.com/gvp) 全称是码云最有价值开源项目，是码云综合评定出的优秀开源项目
-5. 码云官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6. 码云封面人物是一档用来展示码云会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
