@@ -13,8 +13,8 @@ springboot 2.0.6
 有私服的可以将jar包放到私服，直接普通的引用即可.
 ```
 <dependency>
-    <groupId>com.riven</groupId>
-    <artifactId>smart-redisson-spring-boot-starter</artifactId>
+    <groupId>com.delay.queue</groupId>
+    <artifactId>queue-redisson-spring-boot-starter</artifactId>
     <version>1.0.0.RELEASE</version>
 </dependency>
 ```
