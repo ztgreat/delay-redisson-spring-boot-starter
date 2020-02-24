@@ -6,12 +6,12 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.util.Assert;
 
 @Data
-@ConfigurationProperties(prefix = "spring.smart-redisson")
+@ConfigurationProperties(prefix = "spring.delay.queue.redisson")
 public class RedissonProperties {
 
-    private ServerType serverType = ServerType.SINGLE;
+    private ServerType type = ServerType.SINGLE;
 
-    private String serverAddress = "redis://localhost:6379";
+    private String address = "redis://localhost:6379";
 
     private String password = "";
 
