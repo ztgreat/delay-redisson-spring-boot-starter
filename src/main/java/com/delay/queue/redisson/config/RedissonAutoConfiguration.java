@@ -45,8 +45,8 @@ public class RedissonAutoConfiguration {
     @Bean(destroyMethod = "shutdown")
     @ConditionalOnMissingBean
     public RedissonClient redissonClient(RedissonProperties properties) {
-        final ServerType serverType = properties.getServerType();
-        final String serverAddress = properties.getServerAddress();
+        final ServerType serverType = properties.getType();
+        final String serverAddress = properties.getAddress();
         Assert.hasText(serverAddress, "redis cluster nodes config error");
         final String password = properties.getPassword();
         Config config = new Config();
